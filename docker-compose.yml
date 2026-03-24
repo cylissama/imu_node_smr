@@ -1,0 +1,11 @@
+services:
+  imu:
+    build: .
+    container_name: smart-mfg-imu
+    devices:
+      - "/dev/i2c-1:/dev/i2c-1"
+    network_mode: host
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    command: ["python3", "-m", "imu", "-u"]
