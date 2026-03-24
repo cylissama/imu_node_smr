@@ -2,13 +2,12 @@ services:
   imu:
     build: .
     container_name: smart-mfg-imu
+    privileged: true
     devices:
       - "/dev/i2c-1:/dev/i2c-1"
+      - "/dev/gpiomem:/dev/gpiomem"
     network_mode: host
-    environment:
-      - BLINKA_FORCEBOARD=RASPBERRY_PI
-      - BLINKA_FORCECHIP=BCM2XXX
     volumes:
       - ./data:/app/data
     restart: unless-stopped
-    command: ["python3", "-m", "imu", "-u"]
+    command: ["python3", "-m", "imu"]
