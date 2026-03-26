@@ -9,5 +9,8 @@ services:
     network_mode: host
     volumes:
       - ./data:/app/data
+    environment:
+      DEVICE_ID: ${DEVICE_ID:-0}
+      AUTO_TARE: ${AUTO_TARE:-false}
     restart: unless-stopped
     command: ["python3", "-m", "imu"]

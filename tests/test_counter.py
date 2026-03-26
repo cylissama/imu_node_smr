@@ -58,11 +58,23 @@ def test_data_writer_includes_counter_in_csv_and_mqtt(monkeypatch, tmp_path):
         assert mqtt_fields[0] == "1523"
         assert mqtt_fields[1] == "1711111111111"
         assert int(mqtt_fields[2]) >= 1711111111111
+        assert mqtt_fields[-1] == "0"
 
     lines = output_csv.read_text(encoding="utf-8").splitlines()
 
-    assert lines[0] == "counter,capture_time_ms,recorded_at_time_ms,accel_x,accel_y,accel_z,gyro_x,gyro_y,gyro_z,mag_x,mag_y,mag_z,yaw,pitch,roll"
+    assert lines[0] == "counter,capture_time_ms,recorded_at_time_ms,accel_x,accel_y,accel_z,gyro_x,gyro_y,gyro_z,mag_x,mag_y,mag_z,yaw,pitch,roll,device_id"
     csv_fields = lines[1].split(",")
     assert csv_fields[0] == "1523"
     assert csv_fields[1] == "1711111111111"
     assert int(csv_fields[2]) >= 1711111111111
+    assert csv_fields[-1] == "0"
+
+
+def test_data_writer_prefers_env_device_id(monkeypatch, tmp_path):
+    monkeypatch.setattr("imu.DataWriter.Client", DummyClient)
+    monkeypatch.setenv("DEVICE_ID", "84")
+
+    output_csv = tmp_path / "imu_output_device_id.csv"
+
+    with DataWriter(csv_fname=str(output_csv), device_id=12) as writer:
+        assert writer.device_id == 84

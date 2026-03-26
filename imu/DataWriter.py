@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 import time
 from typing import Any, ContextManager
 
@@ -18,18 +19,33 @@ class DataWriter(ContextManager):
     Output schema is intentionally stable and starts with `counter`.
     """
 
+    @staticmethod
+    def _resolve_device_id(device_id):
+        env_device_id = os.getenv("DEVICE_ID")
+
+        for candidate in (env_device_id, device_id, 0):
+            if candidate is None:
+                continue
+
+            try:
+                return int(candidate)
+            except (TypeError, ValueError):
+                continue
+
+        return 0
+
     def __init__(
         self,
         csv_fname=f"data/bno08X-{datetime.now().isoformat()}.csv",
         mqtt_broker_ip="127.0.0.1",
         mqtt_broker_port=1883,
-        device_id="joint-1",  # TODO: Add config files or smth
+        device_id=0,
         scr: window | None = None,
     ):
         self.csv_fname = csv_fname
         self.mqtt_broker_ip = mqtt_broker_ip
         self.mqtt_broker_port = mqtt_broker_port
-        self.device_id = device_id
+        self.device_id = self._resolve_device_id(device_id)
         self.scr = scr
 
     def __enter__(self):
@@ -39,7 +55,7 @@ class DataWriter(ContextManager):
             + "accel_x,accel_y,accel_z,"
             + "gyro_x,gyro_y,gyro_z,"
             + "mag_x,mag_y,mag_z,"
-            + "yaw,pitch,roll\n"
+            + "yaw,pitch,roll,device_id\n"
         )
         try:
             if self.scr:
@@ -51,7 +67,7 @@ class DataWriter(ContextManager):
                 broker_ip=self.mqtt_broker_ip,
                 broker_port=self.mqtt_broker_port,
                 client_type=Client.IMU,
-                device_id=self.device_id,
+                device_id=str(self.device_id),
             )
             if self.scr:
                 self.scr.addstr(
@@ -113,12 +129,12 @@ class DataWriter(ContextManager):
         accel_x,accel_y,accel_z,
         gyro_x,gyro_y,gyro_z,
         mag_x,mag_y,mag_z,
-        yaw,pitch,roll
+        yaw,pitch,roll,device_id
         """
         out = (
             f"{data.counter},{data.capture_time_ms},{data.recorded_at_time_ms},{data.accel_x},{data.accel_y},{data.accel_z},"
             + f"{data.gyro_x},{data.gyro_y},{data.gyro_z},{data.mag_x},{data.mag_y},"
-            + f"{data.mag_z},{data.yaw},{data.pitch},{data.roll}"
+            + f"{data.mag_z},{data.yaw},{data.pitch},{data.roll},{self.device_id}"
         )
         self.csv_file.write(out + "\n")
 
@@ -130,10 +146,10 @@ class DataWriter(ContextManager):
         accel_x,accel_y,accel_z,
         gyro_x,gyro_y,gyro_z,
         mag_x,mag_y,mag_z,
-        yaw,pitch,roll
+        yaw,pitch,roll,device_id
         """
         self.mqtt_client.publish(
             f"{data.counter},{data.capture_time_ms},{data.recorded_at_time_ms},{data.accel_x},{data.accel_y},{data.accel_z},"
             + f"{data.gyro_x},{data.gyro_y},{data.gyro_z},{data.mag_x},{data.mag_y},"
-            + f"{data.mag_z},{data.yaw},{data.pitch},{data.roll}"
+            + f"{data.mag_z},{data.yaw},{data.pitch},{data.roll},{self.device_id}"
         )

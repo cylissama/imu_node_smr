@@ -1,5 +1,6 @@
 import argparse
 from curses import window, wrapper
+import os
 
 from .BaseIMU import BaseIMU
 from .readings import attended_reading, unattended_reading
@@ -21,6 +22,14 @@ def ui(scr: window, imu: BaseIMU):
 
 def no_ui(imu: BaseIMU):
     unattended_reading(imu)
+
+
+def _env_flag(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 if __name__ == "__main__":
@@ -48,7 +57,10 @@ if __name__ == "__main__":
 
     imu = IMU.get_conn()
 
-    if args.tare and hasattr(imu, "tare"):
+    auto_tare_enabled = _env_flag("AUTO_TARE", default=False)
+    should_tare = args.tare or auto_tare_enabled
+
+    if should_tare and hasattr(imu, "tare"):
         imu.tare()
 
     if args.ui:
