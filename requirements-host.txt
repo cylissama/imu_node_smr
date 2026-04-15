@@ -1,4 +1,3 @@
 Adafruit-Blinka
 adafruit-circuitpython-bno08x
 numpy
-paho-mqtt

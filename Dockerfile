@@ -2,17 +2,10 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    i2c-tools \
-    gcc \
-    python3-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY requirements.txt /app/requirements.txt
+COPY requirements-edge.txt /app/requirements-edge.txt
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r /app/requirements.txt && \
-    pip install lgpio
+    pip install --no-cache-dir -r /app/requirements-edge.txt
 
 COPY . /app
 
-CMD ["python3", "-m", "imu", "-u"]
+CMD ["python3", "-m", "imu_edge"]

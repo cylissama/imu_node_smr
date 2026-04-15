@@ -170,7 +170,11 @@ class IMU:
     @staticmethod
     def get_conn() -> BNO08X_YPR:
         if not IMU._imu:
-            i2c = busio.I2C(board.SCL, board.SDA)
-            IMU._imu = BNO08X_YPR(i2c)
+            IMU._imu = connect_imu()
 
         return IMU._imu
+
+
+def connect_imu(report_interval_ms: int = 10) -> BNO08X_YPR:
+    i2c = busio.I2C(board.SCL, board.SDA)
+    return BNO08X_YPR(i2c, report_interval_ms=report_interval_ms)

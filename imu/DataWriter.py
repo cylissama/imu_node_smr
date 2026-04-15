@@ -8,9 +8,53 @@ try:
 except ModuleNotFoundError:
     window = Any
 
-from package.client import Client
+try:
+    from package.client import Client as ExternalClient
+except ModuleNotFoundError:
+    ExternalClient = None
 
-from .BaseIMU import IMUData
+try:
+    import paho.mqtt.client as mqtt
+except ModuleNotFoundError:
+    mqtt = None
+
+from .IMUData import IMUData
+
+
+class PahoClientAdapter:
+    IMU = "IMU"
+
+    def __init__(
+        self,
+        broker_ip: str,
+        broker_port: int,
+        client_type: str,
+        device_id: str,
+    ):
+        if mqtt is None:
+            raise RuntimeError(
+                "No MQTT client implementation is available. Install paho-mqtt or facade-sdk."
+            )
+
+        client_id = os.getenv("MQTT_CLIENT_ID", f"{client_type.lower()}-{device_id}")
+        topic = os.getenv("MQTT_TOPIC", "imu/data")
+
+        self._topic = topic
+        self._client = mqtt.Client(client_id=client_id)
+        self._client.connect(broker_ip, broker_port)
+        self._client.loop_start()
+
+    def publish(self, payload: str):
+        info = self._client.publish(self._topic, payload)
+        if info.rc != mqtt.MQTT_ERR_SUCCESS:
+            raise RuntimeError(f"MQTT publish failed with rc={info.rc}")
+
+    def disconnect(self):
+        self._client.loop_stop()
+        self._client.disconnect()
+
+
+Client = ExternalClient or PahoClientAdapter
 
 
 class DataWriter(ContextManager):
@@ -18,6 +62,8 @@ class DataWriter(ContextManager):
 
     Output schema is intentionally stable and starts with `counter`.
     """
+
+    DEFAULT_CSV_FNAME = f"data/bno08X-{datetime.now().isoformat()}.csv"
 
     @staticmethod
     def _resolve_device_id(device_id):
@@ -36,7 +82,7 @@ class DataWriter(ContextManager):
 
     def __init__(
         self,
-        csv_fname=f"data/bno08X-{datetime.now().isoformat()}.csv",
+        csv_fname=DEFAULT_CSV_FNAME,
         mqtt_broker_ip="127.0.0.1",
         mqtt_broker_port=1883,
         device_id=0,

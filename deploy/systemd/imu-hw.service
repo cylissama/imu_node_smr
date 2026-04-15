@@ -1,0 +1,19 @@
+[Unit]
+Description=Smart Manufacturing IMU Hardware Service
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+SupplementaryGroups=i2c gpio
+WorkingDirectory=/opt/smart-mfg-imu
+Environment=IMU_SOCKET_PATH=/run/imu-hw/imu.sock
+ExecStart=/opt/smart-mfg-imu/.venv/bin/python -m imu_host
+Restart=always
+RestartSec=3
+RuntimeDirectory=imu-hw
+RuntimeDirectoryMode=0755
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,31 @@
+services:
+  imu-edge:
+    image: smart-mfg-imu:latest
+    deploy:
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.labels.imu == true
+    volumes:
+      - type: bind
+        source: /run/imu-hw
+        target: /run/imu-hw
+      - type: bind
+        source: /opt/smart-mfg-imu/data
+        target: /app/data
+    environment:
+      DEVICE_ID: ${DEVICE_ID:-0}
+      IMU_SOCKET_PATH: ${IMU_SOCKET_PATH:-/run/imu-hw/imu.sock}
+      IMU_REQUEST_TARE: ${IMU_REQUEST_TARE:-false}
+      IMU_SAMPLE_HZ: ${IMU_SAMPLE_HZ:-100}
+      MQTT_BROKER_IP: ${MQTT_BROKER_IP:-mqtt-broker}
+      MQTT_BROKER_PORT: ${MQTT_BROKER_PORT:-1883}
+      MQTT_TOPIC: ${MQTT_TOPIC:-imu/data}
+      IMU_CSV_PATH: ${IMU_CSV_PATH:-/app/data/imu-edge.csv}
+      IMU_EDGE_HEALTH_PATH: /tmp/imu-edge-health.json
+    healthcheck:
+      test: ["CMD", "python3", "-m", "imu_edge", "healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

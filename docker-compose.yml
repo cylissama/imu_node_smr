@@ -2,15 +2,17 @@ services:
   imu:
     build: .
     container_name: smart-mfg-imu
-    privileged: true
-    devices:
-      - "/dev/i2c-1:/dev/i2c-1"
-      - "/dev/gpiomem:/dev/gpiomem"
-    network_mode: host
     volumes:
       - ./data:/app/data
+      - /run/imu-hw:/run/imu-hw
     environment:
       DEVICE_ID: ${DEVICE_ID:-0}
-      AUTO_TARE: ${AUTO_TARE:-false}
+      IMU_SOCKET_PATH: ${IMU_SOCKET_PATH:-/run/imu-hw/imu.sock}
+      IMU_REQUEST_TARE: ${IMU_REQUEST_TARE:-false}
+      IMU_SAMPLE_HZ: ${IMU_SAMPLE_HZ:-100}
+      MQTT_BROKER_IP: ${MQTT_BROKER_IP:-127.0.0.1}
+      MQTT_BROKER_PORT: ${MQTT_BROKER_PORT:-1883}
+      MQTT_TOPIC: ${MQTT_TOPIC:-imu/data}
+      IMU_CSV_PATH: ${IMU_CSV_PATH:-/app/data/imu-edge.csv}
     restart: unless-stopped
-    command: ["python3", "-m", "imu"]
+    command: ["python3", "-m", "imu_edge"]

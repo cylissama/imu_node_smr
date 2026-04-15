@@ -1,6 +1,7 @@
 import time
 
-from .BaseIMU import BaseIMU, IMUData
+from .BaseIMU import BaseIMU
+from .IMUData import IMUData
 
 
 class FakeIMU(BaseIMU):
@@ -61,6 +62,10 @@ class IMU:
     @staticmethod
     def get_conn() -> FakeIMU:
         if not IMU._imu:
-            IMU._imu = FakeIMU()
+            IMU._imu = connect_imu()
 
         return IMU._imu
+
+
+def connect_imu(sample_filename: str = "data/sample_data.csv") -> FakeIMU:
+    return FakeIMU(sample_filename=sample_filename)

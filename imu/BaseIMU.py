@@ -21,6 +21,10 @@ class BaseIMU(ABC):
             self.__sample_counter += 1
             return counter
 
+    def reset_counter(self, counter_start: int = 0) -> None:
+        with self.__counter_lock:
+            self.__sample_counter = counter_start
+
     def _normalize_quaternion(self, q: tuple[float, float, float, float]):
             w, x, y, z = q
             magnitude = np.sqrt(w**2 + x**2 + y**2 + z**2)
@@ -51,5 +55,4 @@ class BaseIMU(ABC):
         roll = np.degrees(roll)
 
         return tuple(np.round((yaw, pitch, roll), decimals=3))
-
 
